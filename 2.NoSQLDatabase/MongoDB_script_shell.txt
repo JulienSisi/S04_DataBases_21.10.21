@@ -1,0 +1,60 @@
+# Sélectionner la base de donnée, ici nommé "demo"
+> use demo
+
+# Vérifier le nombre de documents importés.
+> db.publis.count()
+118026
+
+# Prévisualiser les 20 premiers documents.
+> db.publis.find({}).limit(20)
+
+# Lister tous les livres (type 'Book').
+> db.publis.find( { type: 'Book' } )
+
+# Lister les publications depuis 2011.
+> db.publis.find( { year: { $gt: 2010} } )
+
+# Lister toutes les publications de 2011 et 2013.
+> db.publis.find( { year: { $in: [ 2011, 2013] } } )
+
+# Lister toutes les publications de 2011 ou 2013.
+> db.publis.find( { $or: [ { year : 2011 }, { year : 2013 } ] } ).count()
+
+# Lister les publications ayant 3 auteurs.
+> db.publis.find( { authors: { $size: 3 } } )
+
+# Lister les livres publiés depuis 2014.
+> db.publis.find( {type: 'Book', year: { $gt: 2013 } } )
+
+# Lister les publications de l'auteur "Toru Ishida".
+> db.publis.find( { authors: "Toru Ishida" } )
+
+# Lister tous les éditeurs (type 'publisher') distincts.
+> db.publis.distinct( "publisher" )
+
+# Lister tous les auteurs distincts.
+> db.publis.distinct( "authors" )
+
+# Trier les publications de 'Toru Ishida' par titre de livre et par page de début.
+> varMatch = { $match: { authors: "Toru Ishida" } };
+> varSort = { $sort: { booktitle:1, "pages.start":1 } };
+> db.publis.aggregate( [ varMatch, varSort] );
+
+
+# Compter le nombre de ses publications.
+> varMatch = { $match: { authors: "Toru Ishida" } };
+> varGroup = { $group: { "_id": null , myCount: { $sum: 1 } } };
+> db.publis.aggregate( [ varMatch, varGroup] );
+
+# Compter le nombre de publications depuis 2011 et par type.
+> varMatch = { $match: { authors: "Toru Ishida", year: { $gt: 2010} } };
+> varGroup = { $group: { "_id" : "$type" , myCount: { $sum: 1 } } };
+> db.publis.aggregate( [ varMatch, varGroup] );
+
+# Compter le nombre de publications par auteur et trier le résultat par ordre croissant.
+> varUnwind = { $unwind: "$authors" };
+> varGroup = { $group: { "_id" : "$authors" , myCount: { $sum: 1 } } };
+> varSort = { $sort: { myCount:-1 } };
+> varLimit = { $limit : 100 };
+> db.publis.aggregate( [ varUnwind, varGroup, varSort, varLimit] );
+
